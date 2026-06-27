@@ -2,12 +2,14 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import urllib.error
+from urllib.parse import parse_qs, urlparse
 
 from .api_routes import (
     handle_get_connected_registered_devices,
     handle_get_devices,
     handle_get_eero_debug,
     handle_get_logs,
+    handle_get_presence_history,
     handle_get_registered_devices,
     handle_patch_registered_device,
     handle_post_eero_login,
@@ -53,16 +55,25 @@ class WifiApiHandler(BaseHTTPRequestHandler):
         if not _api_key_valid(self.headers):
             self._send_json(401, {"error": "Unauthorized"})
             return
+        parsed = urlparse(self.path)
+        route = parsed.path
         try:
-            if self.path in {"/devices", "/devices/"}:
+            if route in {"/devices", "/devices/"}:
                 status_code, payload = handle_get_devices()
-            elif self.path in {"/registered-devices", "/registered-devices/", "/regsistered-devices", "/regsistered-devices/"}:
+            elif route in {"/registered-devices", "/registered-devices/", "/regsistered-devices", "/regsistered-devices/"}:
                 status_code, payload = handle_get_registered_devices()
-            elif self.path in {"/connected", "/connected/"}:
+            elif route in {"/connected", "/connected/"}:
                 status_code, payload = handle_get_connected_registered_devices()
-            elif self.path in {"/logs", "/logs/"}:
+            elif route in {"/logs", "/logs/"}:
                 status_code, payload = handle_get_logs()
-            elif self.path in {"/eero/debug", "/eero/debug/"}:
+            elif route in {"/presence/history", "/presence/history/"}:
+                hours_values = parse_qs(parsed.query).get("hours", ["24"])
+                try:
+                    hours = max(1, min(168, int(hours_values[0])))
+                except (TypeError, ValueError):
+                    hours = 24
+                status_code, payload = handle_get_presence_history(hours)
+            elif route in {"/eero/debug", "/eero/debug/"}:
                 status_code, payload = handle_get_eero_debug()
             else:
                 status_code, payload = 404, {"error": "Not found"}

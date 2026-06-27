@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getConnectedDevices, getLogs, getRegisteredDevices, registerDevice, updateDevice } from './api';
+import { getConnectedDevices, getLogs, getPresenceHistory, getRegisteredDevices, registerDevice, updateDevice } from './api';
 import HomePage from './pages/HomePage';
+import PresencePage from './pages/PresencePage';
 import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const [backendHealthy, setBackendHealthy] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [logs, setLogs] = useState([]);
+  const [history, setHistory] = useState(null);
 
   const colourByMac = useMemo(
     () => new Map(registeredDevices.map((device) => [device.mac_address, device.colour || '#4D96FF'])),
@@ -85,17 +87,30 @@ export default function App() {
     }
   }
 
+  // Presence history changes only when events fire, so a slower poll is fine;
+  // the live status that colours the Presence cards rides the 20s loadData loop.
+  async function loadHistory() {
+    try {
+      setHistory(await getPresenceHistory(24));
+    } catch {
+      /* keep the last good history on transient errors */
+    }
+  }
+
   useEffect(() => {
     loadData();
     loadLogs();
+    loadHistory();
 
     const refreshInterval = setInterval(loadData, 20000);
     // Poll the event feed more often so enter/leave events show up quickly.
     const logsInterval = setInterval(loadLogs, 5000);
+    const historyInterval = setInterval(loadHistory, 60000);
 
     return () => {
       clearInterval(refreshInterval);
       clearInterval(logsInterval);
+      clearInterval(historyInterval);
     };
   }, []);
 
@@ -148,6 +163,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            id="tab-presence"
+            className={activeTab === 'presence' ? 'tab active' : 'tab'}
+            onClick={() => setActiveTab('presence')}
+          >
+            📋 Presence
+          </button>
+          <button
+            type="button"
             id="tab-settings"
             className={activeTab === 'settings' ? 'tab active' : 'tab'}
             onClick={() => setActiveTab('settings')}
@@ -159,7 +182,9 @@ export default function App() {
 
       <section className="content">
         <header className="page-header">
-          <p className="page-title">{activeTab === 'home' ? '🏠 Home' : '⚙️ Settings'}</p>
+          <p className="page-title">
+            {activeTab === 'home' ? '🏠 Home' : activeTab === 'presence' ? '📋 Presence' : '⚙️ Settings'}
+          </p>
         </header>
 
         {activeTab === 'home' ? (
@@ -167,6 +192,12 @@ export default function App() {
             connectedRegisteredDevices={connectedRegisteredDevices}
             logs={logs}
             colourByMac={colourByMac}
+          />
+        ) : activeTab === 'presence' ? (
+          <PresencePage
+            registeredDevices={registeredDevices}
+            connectedRegisteredDevices={connectedRegisteredDevices}
+            history={history}
           />
         ) : (
           <SettingsPage
