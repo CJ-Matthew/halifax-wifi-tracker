@@ -1,0 +1,15 @@
+# Environment secrets
+.env/local.env
+local.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Claude Code internal
+.claude/

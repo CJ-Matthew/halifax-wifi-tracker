@@ -1,0 +1,715 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────────────────── */
+:root {
+  --sky:        #87CEEB;
+  --sky-light:  #B0DFF0;
+  --grass:      #5dba4a;
+  --grass-dark: #3e8a33;
+  --dirt:       #c47b38;
+  --panel-bg:   #fffde7;
+  --panel-border: #f9a825;
+  --panel-shadow: #e65100;
+  --text:       #1a1a2e;
+  --text-muted: #5a5a7a;
+  --white:      #ffffff;
+  --accent:     #ff6b35;
+  --accent2:    #ffca28;
+  --green-btn:  #66bb6a;
+  --green-btn-dark: #388e3c;
+  --red:        #ef5350;
+  --pixel-border: 4px solid #1a1a2e;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+
+body {
+  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  /* matches the in-scene sky → grass so the house scene blends seamlessly */
+  background: linear-gradient(180deg, #7ec8ef 0%, #9fd9ef 30%, #6aa847 70%, #569036 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  image-rendering: pixelated;
+}
+
+button, input, select { font: inherit; }
+
+/* ─── App Shell ─────────────────────────────────────────────────────── */
+.app-shell {
+  width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+/* ─── Sidebar ───────────────────────────────────────────────────────── */
+.sidebar {
+  background: #fff9c4;
+  border-right: var(--pixel-border);
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.brand {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: #e65100;
+  text-shadow: 2px 2px 0 #ffca28;
+  text-align: center;
+  padding: 10px 4px;
+  background: #ffecb3;
+  border: 4px solid #e65100;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Tabs ──────────────────────────────────────────────────────────── */
+.tabs {
+  display: grid;
+  gap: 10px;
+}
+
+.tab {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  background: #e8f5e9;
+  color: var(--text-muted);
+  border: 4px solid #bdbdbd;
+  border-radius: 4px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 0 #bdbdbd;
+  position: relative;
+  top: 0;
+}
+
+.tab:hover {
+  background: #c8e6c9;
+  border-color: var(--green-btn-dark);
+  color: var(--green-btn-dark);
+  box-shadow: 0 4px 0 var(--green-btn-dark);
+}
+
+.tab.active {
+  background: var(--green-btn);
+  color: #fff;
+  border-color: var(--green-btn-dark);
+  box-shadow: 0 4px 0 var(--green-btn-dark);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+}
+
+.tab:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--green-btn-dark);
+}
+
+/* ─── Content ───────────────────────────────────────────────────────── */
+.content {
+  padding: 24px 28px 48px;
+  min-height: 100vh;
+}
+
+.page-header { margin-bottom: 16px; }
+
+.page-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-shadow: 3px 3px 0 var(--accent2);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ─── Home page ─────────────────────────────────────────────────────── */
+.home-page {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  /* bleed across the content padding so the scene reaches the edges and
+     there are no side bands of mismatched background */
+  margin: 0 -28px;
+  background: transparent;
+}
+
+.home-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
+  color: var(--text);
+  text-shadow: 2px 2px 0 var(--accent2);
+  text-align: center;
+  margin: 0;
+}
+
+.home-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+/* ─── House Scene ───────────────────────────────────────────────────── */
+.house-scene {
+  width: 100%;
+  position: relative;
+  user-select: none;
+}
+
+.house-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.house-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ─── Character Layer ───────────────────────────────────────────────── */
+.char-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pico-char {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: left, top;
+  z-index: 2;
+}
+
+.pico-char.idle svg {
+  animation: cat-idle 1.2s ease-in-out infinite alternate;
+}
+
+.pico-char.walking svg,
+.pico-char.toStairs svg {
+  animation: cat-walk 0.3s ease-in-out infinite alternate;
+}
+
+.pico-char.onStairs svg,
+.pico-char.interacting svg {
+  animation: cat-idle 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes cat-idle {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2px); }
+}
+
+@keyframes cat-walk {
+  0%   { transform: translateY(0) rotate(-3deg); }
+  100% { transform: translateY(-3px) rotate(3deg); }
+}
+
+/* 2-frame walk cycle: legs swing in opposite phase */
+.pico-char.walking .cat-leg-l {
+  animation: leg-l 0.26s steps(1) infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center top;
+}
+.pico-char.walking .cat-leg-r {
+  animation: leg-r 0.26s steps(1) infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center top;
+}
+
+@keyframes leg-l {
+  from { transform: translateX(-2px); }
+  to   { transform: translateX(2px); }
+}
+@keyframes leg-r {
+  from { transform: translateX(2px); }
+  to   { transform: translateX(-2px); }
+}
+
+/* ─── Speech bubble ────────────────────────────────────────────────── */
+.char-speech {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.34rem;
+  background: #ffffff;
+  color: #1a1a2e;
+  border: 2px solid #1a1a2e;
+  border-radius: 6px;
+  padding: 4px 6px;
+  white-space: nowrap;
+  /* float above the cat without taking layout space (so it can't push
+     the cat below the floor) */
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 4px;
+  transform: translateX(-50%);
+  line-height: 1.5;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.25);
+  animation: speech-pop 0.18s ease-out;
+}
+.char-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #1a1a2e;
+}
+@keyframes speech-pop {
+  from { transform: translateX(-50%) scale(0.6); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+}
+
+/* ─── Event feed (top-right) ───────────────────────────────────────── */
+.event-feed {
+  position: absolute;
+  bottom: 15%;
+  right: 2%;
+  width: clamp(124px, 17%, 200px);
+  background: rgba(18, 14, 10, 0.7);
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  padding: 7px 9px;
+  z-index: 4;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.event-feed-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.42rem;
+  letter-spacing: 0.04em;
+  color: #ffe6a0;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+.event-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.74rem;
+  /* crisp dark outline + soft light halo so any fill colour stays legible
+     against the dark panel (esp. dark blues/purples) */
+  text-shadow:
+    -1px -1px 0 rgba(0, 0, 0, 0.9),
+     1px -1px 0 rgba(0, 0, 0, 0.9),
+    -1px  1px 0 rgba(0, 0, 0, 0.9),
+     1px  1px 0 rgba(0, 0, 0, 0.9),
+     0    0   4px rgba(255, 255, 255, 0.45);
+  line-height: 1.4;
+}
+.event-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-time {
+  opacity: 0.8;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.event-empty {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: #d9d2c6;
+}
+
+/* ─── Character Nametag ────────────────────────────────────────────── */
+.char-nametag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.32rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  border-radius: 3px;
+  padding: 2px 5px;
+  white-space: nowrap;
+  margin-bottom: 2px;
+  line-height: 1.4;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Settings page ─────────────────────────────────────────────────── */
+.settings-page { display: flex; flex-direction: column; gap: 20px; }
+
+.settings-hero {
+  background: linear-gradient(135deg, #fff9c4 0%, #ffe0b2 100%);
+  border: var(--pixel-border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  box-shadow: 4px 4px 0 #e65100;
+}
+
+.settings-hero h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+  color: #e65100;
+  text-shadow: 2px 2px 0 #ffca28;
+  line-height: 1.5;
+}
+
+.settings-hero p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+/* ─── Pixel Panel ───────────────────────────────────────────────────── */
+.panel {
+  background: var(--panel-bg);
+  border: var(--pixel-border);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 #bdbdbd;
+  padding: 20px;
+}
+
+.panel h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #e0e0e0;
+  line-height: 1.6;
+}
+
+/* ─── Form ──────────────────────────────────────────────────────────── */
+.form { display: grid; gap: 14px; }
+
+.form label {
+  display: grid;
+  gap: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.form input[type="text"],
+.form select {
+  width: 100%;
+  border: 3px solid #1a1a2e;
+  border-radius: 3px;
+  background: #fff;
+  color: var(--text);
+  padding: 12px 14px;
+  outline: none;
+  font-size: 0.9rem;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  box-shadow: 3px 3px 0 #bdbdbd;
+  transition: box-shadow 0.15s;
+}
+
+.form input[type="text"]:focus,
+.form select:focus {
+  border-color: var(--green-btn-dark);
+  box-shadow: 3px 3px 0 var(--green-btn-dark);
+}
+
+.form button {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  border: 3px solid var(--green-btn-dark);
+  border-radius: 3px;
+  padding: 14px 18px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green-btn);
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--green-btn-dark);
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+  top: 0;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.25);
+}
+
+.form button:hover { background: #81c784; }
+
+.form button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--green-btn-dark);
+}
+
+.form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  box-shadow: 0 5px 0 var(--green-btn-dark);
+}
+
+/* ─── Colour Picker ────────────────────────────────────────────────── */
+.colour-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colour-input {
+  width: 48px;
+  height: 40px;
+  border: 3px solid #1a1a2e;
+  border-radius: 3px;
+  padding: 2px;
+  cursor: pointer;
+  background: #fff;
+  box-shadow: 2px 2px 0 #bdbdbd;
+}
+
+.colour-input.small {
+  width: 36px;
+  height: 30px;
+}
+
+.colour-hex {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ─── Cat Preview ──────────────────────────────────────────────────── */
+.cat-preview-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  background: #f5f5f0;
+  border: 2px dashed #d0d0d0;
+  border-radius: 4px;
+}
+
+.preview-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.4rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.cat-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cat-preview-nametag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.3rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  border-radius: 2px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Device list ───────────────────────────────────────────────────── */
+.device-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.device-list li {
+  border-radius: 3px;
+  background: #fff;
+  border: 3px solid #e0e0e0;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
+}
+
+.device-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.device-info strong {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.device-info span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: 'Nunito', sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-list strong {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.device-list span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+  padding: 6px 2px;
+}
+
+/* ─── Edit colour button ───────────────────────────────────────────── */
+.btn-small {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.38rem;
+  border: 2px solid var(--green-btn-dark);
+  border-radius: 3px;
+  padding: 6px 10px;
+  color: #fff;
+  background: var(--green-btn);
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--green-btn-dark);
+  transition: transform 0.1s;
+  white-space: nowrap;
+}
+
+.btn-small:hover { background: #81c784; }
+
+.btn-small:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.btn-small.cancel {
+  background: #ef5350;
+  border-color: #c62828;
+  box-shadow: 0 2px 0 #c62828;
+}
+
+.edit-colour-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* ─── Status Panel ──────────────────────────────────────────────────── */
+.status-panel { display: grid; gap: 12px; }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 3px solid rgba(0,0,0,0.3);
+  flex: 0 0 auto;
+}
+
+.status-dot.success { background: var(--green-btn); }
+.status-dot.error   { background: var(--red); }
+
+.status-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ─── Connected count badge ─────────────────────────────────────────── */
+.connected-count {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  background: var(--green-btn);
+  color: #fff;
+  border: 2px solid var(--green-btn-dark);
+  border-radius: 3px;
+  padding: 4px 8px;
+  box-shadow: 2px 2px 0 var(--green-btn-dark);
+  display: inline-block;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    border-right: 0;
+    border-bottom: var(--pixel-border);
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .brand { margin-bottom: 0; font-size: 0.55rem; }
+  .tabs { grid-auto-flow: column; gap: 8px; }
+  .settings-grid { grid-template-columns: 1fr; }
+}
