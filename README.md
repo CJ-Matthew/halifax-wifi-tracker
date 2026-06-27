@@ -1,72 +1,67 @@
-# Wifi Scan
+# Halifax WiFi Tracker
 
-This project is split into a small Python backend and a Vite React frontend.
+See who's home — at a glance. The app watches your eero network for connected devices, matches them against a registered list of people and their devices, and displays a live visual of who's in the house. Devices can be registered directly from the UI.
 
-## Structure
+## How it works
 
-- `backend/` - local JSON API and Supabase integration
-- `frontend/` - Vite React control panel
+- The backend polls your eero network and logs presence events to Supabase
+- The frontend shows registered people as cards — green when connected, grey when away
+- You can register new devices (name + MAC address) from the Settings page
 
-## Backend endpoints
+## Stack
 
-- `GET /devices/` returns connected devices from the local network scan
-- `POST /registered-devices/` saves `{ mac_address, name }` to Supabase
-- `GET /registered-devices/` returns the registered Supabase rows
-- `GET /connected/` returns devices that are both connected and registered
-- `GET /regsistered-devices/` is accepted as a typo alias for the registered-devices route
+- **Backend** — Python stdlib HTTP server + eero API + Supabase
+- **Frontend** — React + Vite
 
-## Environment
+## Local setup
 
-Use `.env/local.env` for the backend.
-
-Required variables:
-
-- `SUPABASE_URL` - example: `https://your-project-ref.supabase.co/rest/v1/`
-- `SUPABASE_KEY` - use your Supabase key
-- `SUPABASE_TABLE` - example: `Register-Wifi-Devices`
-- `HOST` - optional, defaults to `127.0.0.1`
-- `PORT` - optional, defaults to `8000`
-
-## Run the backend
+Copy the env template and fill in your values:
 
 ```bash
-cd /Users/calebmatthew/home-project/Wifi-Scan
+cp .env/local.env.example .env/local.env
+```
+
+Required variables in `.env/local.env`:
+
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | e.g. `https://your-ref.supabase.co/rest/v1/` |
+| `SUPABASE_KEY` | Your Supabase service role key |
+| `SUPABASE_TABLE` | Table name, e.g. `Register-Wifi-Devices` |
+| `EERO_USER_TOKEN` | Obtained via the `/eero/login` + `/eero/verify` flow |
+| `EERO_NETWORK_NAME` | Your eero network name |
+
+## Running locally
+
+Run everything together:
+
+```bash
+./dev.sh
+```
+
+Or run the two pieces separately:
+
+```bash
+# Backend (from repo root)
 python3 -m backend.server
-```
 
-## Run everything together
-
-From the repo root:
-
-```bash
-bash dev.sh
-```
-
-This starts the backend and frontend together. The frontend refreshes the device lists every 2 minutes automatically.
-
-## Frontend
-
-The frontend is a Vite React app that calls the local backend.
-
-### Frontend scripts
-
-```bash
-cd /Users/calebmatthew/home-project/Wifi-Scan/frontend
+# Frontend (in a separate terminal)
+cd frontend
 npm install
 npm run dev
 ```
 
-The dev server proxies API calls to `http://127.0.0.1:8000`.
+Frontend runs on `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
 
-The control screen refreshes connected and registered devices every 2 minutes.
+## API endpoints
 
-If you prefer a different backend host or port, set `HOST` and `PORT` in `.env/local.env`.
-
-## Control screen
-
-The frontend shows:
-
-- a left-side tab rail with `Home` and `Settings`
-- a blank `Home` page for now
-- a `Settings` page with `Register Device`, `Connected`, `Registered Devices`, and `Status`
-- a 2-minute refresh cycle for connected and registered device data
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/devices` | All devices currently on the network |
+| `GET` | `/registered-devices` | Devices registered in Supabase |
+| `GET` | `/connected` | Intersection — registered devices that are online |
+| `POST` | `/registered-devices` | Register a device `{ mac_address, name }` |
+| `PATCH` | `/registered-devices` | Update a registered device |
+| `GET` | `/logs` | Recent presence log entries |
+| `POST` | `/eero/login` | Start eero auth (sends SMS) |
+| `POST` | `/eero/verify` | Complete eero auth with OTP |
