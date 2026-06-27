@@ -137,7 +137,7 @@ function PicoCat({ colour, dir, pose = 'stand', eyes = 'open', size = 1 }) {
 /* ─── Character ────────────────────────────────────────────────────────── */
 function Character({ char, containerWidth, containerHeight, scale }) {
   const floorY = FLOOR_Y[char.currentFloor];
-  const nametagH = 16;
+  const nametagH = 16 * scale;
   const catH = 52 * scale;
   const totalH = catH + nametagH;
   const x = (char.x / 100) * containerWidth;
@@ -169,8 +169,14 @@ function Character({ char, containerWidth, containerHeight, scale }) {
             : 'left 0.1s linear, top 0.2s linear',
       }}
     >
-      {char.speech && <div className="char-speech">{char.speech}</div>}
-      <div className="char-nametag">{char.name}</div>
+      {char.speech && (
+        <div className="char-speech" style={{ fontSize: `${Math.max(0.25, 0.34 * scale)}rem` }}>
+          {char.speech}
+        </div>
+      )}
+      <div className="char-nametag" style={{ fontSize: `${Math.max(0.25, 0.32 * scale)}rem` }}>
+        {char.name}
+      </div>
       <PicoCat colour={char.colour} dir={char.dir} pose={pose} eyes={eyes} size={scale} />
     </div>
   );
@@ -779,7 +785,10 @@ export default function HomePage({ connectedRegisteredDevices = [], logs = [], c
 
   const svgHeight = (dims.width * 700) / 1200;
   const totalCount = devices.length;
-  const scale = getCharScale(totalCount);
+  // Cats are sized in absolute pixels, but the house SVG scales to fit the
+  // container width. Multiply by (width / 1200) so cats stay proportional to
+  // the house at any size — desktop (≈1200) is unchanged; phones shrink them.
+  const scale = getCharScale(totalCount) * (dims.width / 1200);
 
   return (
     <div className="home-page">

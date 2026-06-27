@@ -23,7 +23,7 @@
 
 /* ─── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
+html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
 
 body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
@@ -39,7 +39,7 @@ button, input, select { font: inherit; }
 
 /* ─── App Shell ─────────────────────────────────────────────────────── */
 .app-shell {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
@@ -712,4 +712,21 @@ button, input, select { font: inherit; }
   .brand { margin-bottom: 0; font-size: 0.55rem; }
   .tabs { grid-auto-flow: column; gap: 8px; }
   .settings-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── Phone ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* More usable width for settings panels on small phones. */
+  .content { padding: 16px 14px 32px; }
+  /* Keep the home scene's edge-bleed in sync with the tighter padding so
+     the house reaches the edges without overflowing. */
+  .home-page { margin: 0 -14px; }
+
+  /* Logs leave the floating overlay and sit under the house in normal flow,
+     full width, always visible. */
+  .event-feed {
+    position: static;
+    width: auto;
+    margin: 12px 14px 0;
+  }
 }
