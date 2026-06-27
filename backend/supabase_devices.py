@@ -70,6 +70,53 @@ def insert_log(name, mac_address, is_leaving):
         return response.status
 
 
+def get_last_log_for_mac(mac_address):
+    """The most recent presence event for one device, or None."""
+    supabase_url, table_path, headers = _get_rest_config(_logs_table_name())
+    query = urllib.parse.urlencode(
+        {
+            "select": "is_leaving,created_at",
+            "mac_address": f"eq.{mac_address}",
+            "order": "created_at.desc",
+            "limit": "1",
+        }
+    )
+    endpoint = f"{supabase_url}/{table_path}?{query}"
+    request = urllib.request.Request(endpoint, headers=headers, method="GET")
+    with urllib.request.urlopen(request, timeout=10) as response:
+        payload = json.loads(response.read().decode("utf-8", errors="replace"))
+        return payload[0] if isinstance(payload, list) and payload else None
+
+
+def _seconds_since(iso_ts):
+    try:
+        ts = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - ts).total_seconds()
+
+
+def insert_log_deduped(name, mac_address, is_leaving, window_seconds=30):
+    """Log a presence transition, unless it duplicates a very recent one.
+
+    Presence is a toggle, so a device's events must alternate enter/leave. If the
+    last logged event is already this same state and happened within
+    `window_seconds`, it's a duplicate — typically a second poller (e.g. a
+    deployed instance racing local dev) writing the same transition a fraction of
+    a second later — so we skip it. The time window keeps us from suppressing a
+    *legitimate* repeat (e.g. a stale leave from a previous run, after the
+    baseline was seeded silently on restart). Returns None when skipped.
+    """
+    last = get_last_log_for_mac(mac_address)
+    if last is not None and bool(last.get("is_leaving")) == bool(is_leaving):
+        elapsed = _seconds_since(last.get("created_at"))
+        if elapsed is not None and elapsed < window_seconds:
+            return None
+    return insert_log(name, mac_address, is_leaving)
+
+
 def get_recent_logs(limit=5):
     supabase_url, table_path, headers = _get_rest_config(_logs_table_name())
     query = urllib.parse.urlencode(
