@@ -3,6 +3,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
 
 
 def load_env_file(env_path=".env/local.env"):
@@ -75,6 +76,32 @@ def get_recent_logs(limit=5):
         {
             "select": "name,mac_address,is_leaving,created_at",
             "order": "created_at.desc",
+            "limit": str(limit),
+        }
+    )
+    endpoint = f"{supabase_url}/{table_path}?{query}"
+    request = urllib.request.Request(endpoint, headers=headers, method="GET")
+
+    with urllib.request.urlopen(request, timeout=10) as response:
+        body = response.read().decode("utf-8", errors="replace")
+        payload = json.loads(body)
+        return payload if isinstance(payload, list) else []
+
+
+def get_logs_since(days=7, limit=10000):
+    """All presence events newer than `days` ago, oldest-first.
+
+    One query feeds both the 24h Gantt and the roster's 'last seen' lookups —
+    fetching a wider slice than the Gantt window lets us seed each bar's left
+    edge from the last event *before* the window, and find leaves older than 24h.
+    """
+    supabase_url, table_path, headers = _get_rest_config(_logs_table_name())
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    query = urllib.parse.urlencode(
+        {
+            "select": "name,mac_address,is_leaving,created_at",
+            "created_at": f"gte.{since}",
+            "order": "created_at.asc",
             "limit": str(limit),
         }
     )

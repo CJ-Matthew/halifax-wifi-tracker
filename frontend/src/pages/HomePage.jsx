@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, memo } from 'react';
+import { PicoCat } from '../components/PicoCat';
 
 /* ─── Coordinate system ───────────────────────────────────────────────
    SVG viewBox: 1200 x 700.  Character x is 0–100 (% of width → ×12 = SVG x).
@@ -40,15 +41,6 @@ function homeRoomFor(mac) {
   return HOME_ROOMS[h % HOME_ROOMS.length];
 }
 
-/* Darken / lighten a hex colour for outlines & highlights. */
-function shade(hex, f) {
-  const n = parseInt((hex || '#4D96FF').slice(1), 16);
-  const r = Math.max(0, Math.min(255, Math.round(((n >> 16) & 255) * f)));
-  const g = Math.max(0, Math.min(255, Math.round(((n >> 8) & 255) * f)));
-  const b = Math.max(0, Math.min(255, Math.round((n & 255) * f)));
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
 function initCharacter(device) {
   const homeRoom = homeRoomFor(device.mac_address);
   const room = ROOMS[homeRoom];
@@ -76,77 +68,21 @@ function getCharScale(totalCount) {
   return 0.6;
 }
 
-/* ─── Pico cat sprite (matches reference: notched ears, black eyes,
-       white mouth, foot) — outline & highlight derived from colour. ───── */
-function PicoCat({ colour, dir, pose = 'stand', eyes = 'open', size = 1 }) {
-  const w = Math.round(44 * size);
-  const h = Math.round(52 * size);
-  const D = shade(colour, 0.45);   // outline
-  const L = shade(colour, 1.22);   // highlight
-  const sit = pose === 'sit';
-  const dy = sit ? 6 : 0;          // sitting cat sinks down a touch
-
-  return (
-    <svg
-      width={w} height={h}
-      viewBox="0 0 44 52"
-      shapeRendering="crispEdges"
-      style={{ transform: dir === -1 ? 'scaleX(-1)' : 'none', display: 'block', overflow: 'visible' }}
-    >
-      <g transform={`translate(0 ${dy})`}>
-        {/* Ears (two nubs with a notch between) */}
-        <rect x="7"  y="8"  width="9" height="11" fill={colour} stroke={D} strokeWidth="2" />
-        <rect x="28" y="8"  width="9" height="11" fill={colour} stroke={D} strokeWidth="2" />
-        <rect x="9"  y="10" width="3" height="4"  fill={L} />
-        {/* Body */}
-        <rect x="6" y="16" width="32" height="28" rx="3" fill={colour} stroke={D} strokeWidth="2.5" />
-        {/* Highlight */}
-        <rect x="10" y="19" width="8" height="5" fill={L} opacity="0.8" />
-        {/* Eyes */}
-        {eyes === 'closed' ? (
-          <>
-            <rect x="13" y="29" width="7" height="2" fill="#15151f" />
-            <rect x="24" y="29" width="7" height="2" fill="#15151f" />
-          </>
-        ) : (
-          <>
-            <rect x="13" y="25" width="7" height="8" fill="#15151f" />
-            <rect x="24" y="25" width="7" height="8" fill="#15151f" />
-            <rect x="14" y="26" width="2" height="2" fill="#fff" opacity="0.7" />
-            <rect x="25" y="26" width="2" height="2" fill="#fff" opacity="0.7" />
-          </>
-        )}
-        {/* Mouth / chin */}
-        <rect x="20" y="36" width="4" height="4" fill="#fff" stroke={D} strokeWidth="0.5" />
-        {/* Legs (hidden when sitting) */}
-        {!sit && (
-          <g className="cat-legs">
-            <rect className="cat-leg cat-leg-l" x="11" y="44" width="9" height="7" rx="1" fill={colour} stroke={D} strokeWidth="2" />
-            <rect className="cat-leg cat-leg-r" x="24" y="44" width="9" height="7" rx="1" fill={colour} stroke={D} strokeWidth="2" />
-          </g>
-        )}
-        {/* Tucked paws when sitting */}
-        {sit && (
-          <rect x="11" y="42" width="22" height="4" rx="2" fill={colour} stroke={D} strokeWidth="1.5" />
-        )}
-      </g>
-    </svg>
-  );
-}
-
 /* ─── Character ────────────────────────────────────────────────────────── */
 function Character({ char, containerWidth, containerHeight, scale }) {
   const floorY = FLOOR_Y[char.currentFloor];
-  const nametagH = 16;
+  // Anchor the feet to the floor using the cat's own height only. The nametag
+  // and speech bubble are positioned out of flow (see .char-overlays) so their
+  // height — which doesn't shrink linearly on small screens because of the font
+  // floor + fixed padding — can't push the cat below the floor on phones.
   const catH = 52 * scale;
-  const totalH = catH + nametagH;
   const x = (char.x / 100) * containerWidth;
-  const y = (floorY / 700) * containerHeight - totalH;
+  const y = (floorY / 700) * containerHeight - catH;
 
   const isOnStairs = char.state === 'onStairs';
   const isMoving = char.state === 'walking';
   const stairTargetY = isOnStairs && char.targetFloor !== null
-    ? (FLOOR_Y[char.targetFloor] / 700) * containerHeight - totalH
+    ? (FLOOR_Y[char.targetFloor] / 700) * containerHeight - catH
     : y;
 
   const pose = isMoving
@@ -169,8 +105,16 @@ function Character({ char, containerWidth, containerHeight, scale }) {
             : 'left 0.1s linear, top 0.2s linear',
       }}
     >
-      {char.speech && <div className="char-speech">{char.speech}</div>}
-      <div className="char-nametag">{char.name}</div>
+      <div className="char-overlays">
+        {char.speech && (
+          <div className="char-speech" style={{ fontSize: `${Math.max(0.25, 0.34 * scale)}rem` }}>
+            {char.speech}
+          </div>
+        )}
+        <div className="char-nametag" style={{ fontSize: `${Math.max(0.25, 0.32 * scale)}rem` }}>
+          {char.name}
+        </div>
+      </div>
       <PicoCat colour={char.colour} dir={char.dir} pose={pose} eyes={eyes} size={scale} />
     </div>
   );
@@ -779,7 +723,10 @@ export default function HomePage({ connectedRegisteredDevices = [], logs = [], c
 
   const svgHeight = (dims.width * 700) / 1200;
   const totalCount = devices.length;
-  const scale = getCharScale(totalCount);
+  // Cats are sized in absolute pixels, but the house SVG scales to fit the
+  // container width. Multiply by (width / 1200) so cats stay proportional to
+  // the house at any size — desktop (≈1200) is unchanged; phones shrink them.
+  const scale = getCharScale(totalCount) * (dims.width / 1200);
 
   return (
     <div className="home-page">

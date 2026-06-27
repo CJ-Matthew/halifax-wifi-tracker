@@ -23,7 +23,7 @@
 
 /* ─── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
+html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
 
 body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
@@ -39,7 +39,7 @@ button, input, select { font: inherit; }
 
 /* ─── App Shell ─────────────────────────────────────────────────────── */
 .app-shell {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
@@ -243,6 +243,23 @@ button, input, select { font: inherit; }
   to   { transform: translateX(-2px); }
 }
 
+/* ─── Cat overlays (nametag + speech) ──────────────────────────────────
+   Stacked above the cat and taken out of layout flow, so their height never
+   shifts the cat's feet off the floor (the bug was the nametag pushing cats
+   down on small screens, where its font/padding don't scale linearly). */
+.char-overlays {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 2px;
+  pointer-events: none;
+}
+
 /* ─── Speech bubble ────────────────────────────────────────────────── */
 .char-speech {
   font-family: 'Press Start 2P', monospace;
@@ -253,13 +270,6 @@ button, input, select { font: inherit; }
   border-radius: 6px;
   padding: 4px 6px;
   white-space: nowrap;
-  /* float above the cat without taking layout space (so it can't push
-     the cat below the floor) */
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  margin-bottom: 4px;
-  transform: translateX(-50%);
   line-height: 1.5;
   box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.25);
   animation: speech-pop 0.18s ease-out;
@@ -277,8 +287,8 @@ button, input, select { font: inherit; }
   border-top: 5px solid #1a1a2e;
 }
 @keyframes speech-pop {
-  from { transform: translateX(-50%) scale(0.6); opacity: 0; }
-  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 /* ─── Event feed (top-right) ───────────────────────────────────────── */
@@ -351,7 +361,6 @@ button, input, select { font: inherit; }
   border-radius: 3px;
   padding: 2px 5px;
   white-space: nowrap;
-  margin-bottom: 2px;
   line-height: 1.4;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   max-width: 80px;
@@ -696,20 +705,239 @@ button, input, select { font: inherit; }
   line-height: 1.6;
 }
 
+/* ─── Presence page ─────────────────────────────────────────────────── */
+.presence-page { display: flex; flex-direction: column; gap: 22px; }
+
+.presence-section {
+  background: var(--panel-bg);
+  border: var(--pixel-border);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 #bdbdbd;
+  padding: 20px;
+}
+
+.presence-heading {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #e0e0e0;
+  line-height: 1.6;
+}
+
+/* ─── Roster cards ─────────────────────────────────────────────────── */
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+}
+
+.roster-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px 12px;
+  background: #fff;
+  border: 3px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 #d8d8d8;
+  text-align: center;
+}
+
+.roster-card.home {
+  border-color: var(--green-btn);
+  box-shadow: 2px 2px 0 var(--green-btn-dark);
+  background: #f4fbf4;
+}
+
+.roster-card.away { background: #f3f3f3; }
+
+.roster-cat {
+  height: 60px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Away cats fade to grey — present cats keep their colour. */
+.roster-card.away .roster-cat { filter: grayscale(1) opacity(0.5); }
+
+.roster-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.roster-card.home .roster-status { color: var(--green-btn-dark); }
+
+.roster-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+.roster-dot.on { background: var(--green-btn); }
+.roster-dot.off { background: #bdbdbd; }
+
+/* ─── 24h Gantt ────────────────────────────────────────────────────── */
+.gantt { display: flex; flex-direction: column; gap: 7px; }
+
+.gantt-row {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.gantt-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-track {
+  position: relative;
+  height: 22px;
+  border-radius: 6px;
+  background: #eceef1;
+  border: 1px solid #d6d9dd;
+  box-shadow: inset 0 1px 2px rgba(26, 26, 46, 0.08);
+  overflow: hidden;
+}
+
+/* faint vertical lines at each clock tick */
+.gantt-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(26, 26, 46, 0.07);
+}
+
+.gantt-block {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  min-width: 3px;
+  border-radius: 4px;
+  /* glossy top highlight + soft bottom shade gives the flat bars some depth */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0) 45%,
+    rgba(0, 0, 0, 0.16)
+  );
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 46, 0.16);
+}
+
+/* accent line marking the present moment at the right edge */
+.gantt-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: var(--accent);
+}
+
+.gantt-axis-row { margin-top: 3px; }
+
+.gantt-axis {
+  position: relative;
+  height: 14px;
+}
+
+.gantt-tick {
+  position: absolute;
+  top: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.gantt-tick.now {
+  right: 0;
+  left: auto;
+  transform: none;
+  color: var(--accent);
+  font-weight: 800;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
+  /* Grid items default to min-width:auto, which lets wide content (the tab bar)
+     push the column past the viewport and get clipped by overflow-x:hidden.
+     min-width:0 lets the column stay within the screen. */
+  .sidebar, .content { min-width: 0; }
   .sidebar {
     border-right: 0;
     border-bottom: var(--pixel-border);
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     padding: 12px 16px;
-    gap: 12px;
+    gap: 10px 12px;
   }
-  .brand { margin-bottom: 0; font-size: 0.55rem; }
-  .tabs { grid-auto-flow: column; gap: 8px; }
+  .brand { margin-bottom: 0; font-size: 0.55rem; flex: 0 0 auto; }
+  /* Tabs drop onto their own full-width row of equal columns so all three fit
+     without overflowing — adding a third tab no longer blows out the bar. */
+  .tabs {
+    flex: 1 1 100%;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .tab { padding: 12px 6px; }
   .settings-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── Phone ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* More usable width for settings panels on small phones. */
+  .content { padding: 16px 14px 32px; }
+  /* Keep the home scene's edge-bleed in sync with the tighter padding so
+     the house reaches the edges without overflowing. */
+  .home-page { margin: 0 -14px; }
+
+  /* Logs leave the floating overlay and sit under the house in normal flow,
+     full width, always visible. */
+  .event-feed {
+    position: static;
+    width: auto;
+    margin: 12px 14px 0;
+  }
+
+  /* Tighter Gantt label column so the 24h bars keep usable width on phones. */
+  .gantt-row { grid-template-columns: 56px minmax(0, 1fr); gap: 8px; }
+  .gantt-label { font-size: 0.68rem; }
+  .roster-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 }

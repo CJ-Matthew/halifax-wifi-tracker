@@ -11,6 +11,7 @@ export default defineConfig({
       '/regsistered-devices': 'http://127.0.0.1:8000',
       '/connected': 'http://127.0.0.1:8000',
       '/logs': 'http://127.0.0.1:8000',
+      '/presence': 'http://127.0.0.1:8000',
       '/eero': 'http://127.0.0.1:8000',
     },
   },

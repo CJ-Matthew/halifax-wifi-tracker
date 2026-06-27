@@ -1,9 +1,11 @@
 import json
+from datetime import datetime, timedelta, timezone
 
 from .device_discovery import get_connected_macs
 from .eero_client import eero_login, eero_verify, get_raw_devices, save_token_to_env
 from .supabase_devices import (
     get_connected_registered_devices,
+    get_logs_since,
     get_recent_logs,
     get_registered_devices,
     insert_device_name,
@@ -92,6 +94,61 @@ def handle_get_connected_registered_devices():
 
 def handle_get_logs():
     return 200, {"logs": get_recent_logs(5)}
+
+
+def build_home_intervals(events):
+    """Pair enter/leave events for one device into [start, end] home spans.
+
+    `events` is oldest-first. A null `start` means the person was already home
+    before our data window; a null `end` means the span is still open (their
+    last event was an arrival) — the frontend closes it using the live network.
+    """
+    intervals = []
+    open_start = None
+    for event in events:
+        if event.get("is_leaving"):
+            if open_start is not None:
+                intervals.append([open_start, event["created_at"]])
+                open_start = None
+            else:
+                # Left without a matching arrival → home since before the slice.
+                intervals.append([None, event["created_at"]])
+        else:
+            if open_start is None:
+                open_start = event["created_at"]
+            # An arrival while already home is a duplicate; ignore it.
+    if open_start is not None:
+        intervals.append([open_start, None])
+    return intervals
+
+
+def handle_get_presence_history(hours=24):
+    # History only — this endpoint never decides who's present *now*; the
+    # frontend overlays the live connected list for current status.
+    events = get_logs_since(days=7)
+
+    by_mac = {}
+    for event in events:
+        mac = event.get("mac_address")
+        if mac:
+            by_mac.setdefault(mac, []).append(event)
+
+    people = {}
+    for mac, mac_events in by_mac.items():
+        leaves = [e["created_at"] for e in mac_events if e.get("is_leaving")]
+        people[mac] = {
+            "intervals": build_home_intervals(mac_events),
+            "last_seen": max(leaves) if leaves else None,
+        }
+
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(hours=hours)
+    return 200, {
+        "now": now.isoformat(),
+        "window_start": window_start.isoformat(),
+        "hours": hours,
+        "people": people,
+    }
 
 
 def handle_get_eero_debug():

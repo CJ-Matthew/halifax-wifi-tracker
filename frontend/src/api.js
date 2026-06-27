@@ -37,6 +37,11 @@ export async function getLogs() {
   return payload.logs || [];
 }
 
+export async function getPresenceHistory(hours = 24) {
+  // { now, window_start, hours, people: { mac: { intervals, last_seen } } }
+  return requestJson(`/presence/history?hours=${hours}`);
+}
+
 export async function registerDevice(macAddress, name, colour) {
   return requestJson('/registered-devices/', {
     method: 'POST',
