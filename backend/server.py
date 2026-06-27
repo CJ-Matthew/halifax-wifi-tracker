@@ -19,26 +19,40 @@ from . import presence_logger
 from .supabase_devices import load_env_file
 
 
+def _cors_origin():
+    return os.getenv("ALLOWED_ORIGIN", "*")
+
+
+def _api_key_valid(headers):
+    expected = os.getenv("API_KEY")
+    if not expected:
+        return True  # no key configured — allow all (local dev)
+    return headers.get("X-API-Key", "") == expected
+
+
 class WifiApiHandler(BaseHTTPRequestHandler):
     def _send_json(self, status_code, payload):
         response_body = json.dumps(payload).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(response_body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey")
+        self.send_header("Access-Control-Allow-Origin", _cors_origin())
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey, X-API-Key")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
         self.end_headers()
         self.wfile.write(response_body)
 
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey")
+        self.send_header("Access-Control-Allow-Origin", _cors_origin())
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, apikey, X-API-Key")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
         self.end_headers()
 
     def do_GET(self):
+        if not _api_key_valid(self.headers):
+            self._send_json(401, {"error": "Unauthorized"})
+            return
         try:
             if self.path in {"/devices", "/devices/"}:
                 status_code, payload = handle_get_devices()
@@ -65,6 +79,9 @@ class WifiApiHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": str(exc)})
 
     def do_PATCH(self):
+        if not _api_key_valid(self.headers):
+            self._send_json(401, {"error": "Unauthorized"})
+            return
         try:
             payload = read_json_request(self)
 
@@ -90,6 +107,9 @@ class WifiApiHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": str(exc)})
 
     def do_POST(self):
+        if not _api_key_valid(self.headers):
+            self._send_json(401, {"error": "Unauthorized"})
+            return
         try:
             payload = read_json_request(self)
 
@@ -121,7 +141,7 @@ class WifiApiHandler(BaseHTTPRequestHandler):
 
 def main():
     load_env_file()
-    host = os.getenv("HOST", "127.0.0.1")
+    host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
 
     presence_logger.start()

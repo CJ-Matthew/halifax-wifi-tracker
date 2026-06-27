@@ -1,9 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 async function requestJson(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(API_KEY ? { 'X-API-Key': API_KEY } : {}),
       ...(options.headers || {}),
     },
     ...options,
