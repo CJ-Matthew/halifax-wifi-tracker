@@ -23,16 +23,28 @@
 
 /* ─── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+/* No height:100% here — combined with overflow-x:hidden it turns both html and
+   body into nested viewport-height scroll containers, which on phones traps
+   momentum scrolling mid-page (you have to swipe two or three times to get
+   past it). Let the document scroll as a single column instead. */
+html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
 body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
-  /* matches the in-scene sky → grass so the house scene blends seamlessly */
-  background: linear-gradient(180deg, #7ec8ef 0%, #9fd9ef 30%, #6aa847 70%, #569036 100%);
-  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
   image-rendering: pixelated;
+}
+
+/* Viewport-fixed backdrop (sky → grass, matching the house scene). A fixed
+   pseudo-element composites far better than background-attachment:fixed, which
+   forces a full repaint on every scroll frame and stutters on mobile Safari. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, #7ec8ef 0%, #9fd9ef 30%, #6aa847 70%, #569036 100%);
 }
 
 button, input, select { font: inherit; }

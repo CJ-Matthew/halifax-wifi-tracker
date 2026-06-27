@@ -13,3 +13,6 @@ frontend/dist/
 
 # Claude Code internal
 .claude/
+
+.DS_Store
+
