@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from .device_discovery import get_connected_macs
 from .eero_client import eero_login, eero_verify, get_raw_devices, save_token_to_env
+from .weather import get_weather
 from .supabase_devices import (
     get_connected_registered_devices,
     get_logs_since,
@@ -94,6 +95,10 @@ def handle_get_connected_registered_devices():
 
 def handle_get_logs():
     return 200, {"logs": get_recent_logs(5)}
+
+
+def handle_get_weather():
+    return 200, get_weather()
 
 
 def build_home_intervals(events):

@@ -11,6 +11,7 @@ from .api_routes import (
     handle_get_logs,
     handle_get_presence_history,
     handle_get_registered_devices,
+    handle_get_weather,
     handle_patch_registered_device,
     handle_post_eero_login,
     handle_post_eero_verify,
@@ -66,6 +67,8 @@ class WifiApiHandler(BaseHTTPRequestHandler):
                 status_code, payload = handle_get_connected_registered_devices()
             elif route in {"/logs", "/logs/"}:
                 status_code, payload = handle_get_logs()
+            elif route in {"/weather", "/weather/"}:
+                status_code, payload = handle_get_weather()
             elif route in {"/presence/history", "/presence/history/"}:
                 hours_values = parse_qs(parsed.query).get("hours", ["24"])
                 try:
