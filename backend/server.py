@@ -7,17 +7,20 @@ from urllib.parse import parse_qs, urlparse
 from .api_routes import (
     handle_get_connected_registered_devices,
     handle_get_devices,
+    handle_get_display_state,
     handle_get_eero_debug,
     handle_get_logs,
     handle_get_presence_history,
     handle_get_registered_devices,
     handle_get_weather,
     handle_patch_registered_device,
+    handle_post_display_state,
     handle_post_eero_login,
     handle_post_eero_verify,
     handle_post_registered_devices,
     read_json_request,
 )
+from . import display_state
 from . import presence_logger
 from .supabase_devices import load_env_file
 
@@ -69,6 +72,8 @@ class WifiApiHandler(BaseHTTPRequestHandler):
                 status_code, payload = handle_get_logs()
             elif route in {"/weather", "/weather/"}:
                 status_code, payload = handle_get_weather()
+            elif route in {"/display/state", "/display/state/"}:
+                status_code, payload = handle_get_display_state()
             elif route in {"/presence/history", "/presence/history/"}:
                 hours_values = parse_qs(parsed.query).get("hours", ["24"])
                 try:
@@ -129,6 +134,8 @@ class WifiApiHandler(BaseHTTPRequestHandler):
 
             if self.path in {"/registered-devices", "/registered-devices/", "/regsistered-devices", "/regsistered-devices/"}:
                 status_code, response_payload = handle_post_registered_devices(payload)
+            elif self.path in {"/display/state", "/display/state/"}:
+                status_code, response_payload = handle_post_display_state(payload)
             elif self.path in {"/eero/login", "/eero/login/"}:
                 status_code, response_payload = handle_post_eero_login(payload)
             elif self.path in {"/eero/verify", "/eero/verify/"}:
@@ -159,6 +166,7 @@ def main():
     port = int(os.getenv("PORT", "8000"))
 
     presence_logger.start()
+    display_state.start()
 
     server = ThreadingHTTPServer((host, port), WifiApiHandler)
     print(f"Serving on http://{host}:{port}")

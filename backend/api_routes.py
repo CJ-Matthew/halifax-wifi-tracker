@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from .device_discovery import get_connected_macs
+from .display_state import get_face, set_face
 from .eero_client import eero_login, eero_verify, get_raw_devices, save_token_to_env
 from .weather import get_weather
 from .supabase_devices import (
@@ -99,6 +100,18 @@ def handle_get_logs():
 
 def handle_get_weather():
     return 200, get_weather()
+
+
+def handle_get_display_state():
+    return 200, {"face": get_face()}
+
+
+def handle_post_display_state(payload):
+    face = payload.get("face")
+    if face is None:
+        raise ValueError("face is required")
+    # set_face raises ValueError for unknown slugs → 400 via server.py.
+    return 200, {"face": set_face(face)}
 
 
 def build_home_intervals(events):
