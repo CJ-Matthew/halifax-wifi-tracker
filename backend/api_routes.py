@@ -5,6 +5,7 @@ from .device_discovery import get_connected_macs
 from .display_state import get_face, set_face
 from .eero_client import eero_login, eero_verify, get_raw_devices, save_token_to_env
 from .weather import get_weather
+from .spotify import get_now_playing
 from .supabase_devices import (
     get_connected_registered_devices,
     get_logs_since,
@@ -100,6 +101,10 @@ def handle_get_logs():
 
 def handle_get_weather():
     return 200, get_weather()
+
+
+def handle_get_spotify_state():
+    return 200, get_now_playing()
 
 
 def handle_get_display_state():

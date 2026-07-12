@@ -12,6 +12,7 @@ from .api_routes import (
     handle_get_logs,
     handle_get_presence_history,
     handle_get_registered_devices,
+    handle_get_spotify_state,
     handle_get_weather,
     handle_patch_registered_device,
     handle_post_display_state,
@@ -22,6 +23,7 @@ from .api_routes import (
 )
 from . import display_state
 from . import presence_logger
+from .spotify import get_art_bytes
 from .supabase_devices import load_env_file
 
 
@@ -48,6 +50,15 @@ class WifiApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(response_body)
 
+    def _send_raw(self, status_code, content_type, body_bytes):
+        self.send_response(status_code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body_bytes)))
+        self.send_header("Access-Control-Allow-Origin", _cors_origin())
+        self.end_headers()
+        if body_bytes:
+            self.wfile.write(body_bytes)
+
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", _cors_origin())
@@ -62,6 +73,15 @@ class WifiApiHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         route = parsed.path
         try:
+            # Album art is raw RGB565 bytes, not JSON — handled separately.
+            if route in {"/spotify/art", "/spotify/art/"}:
+                art = get_art_bytes()
+                if art:
+                    self._send_raw(200, "application/octet-stream", art)
+                else:
+                    self._send_raw(204, "application/octet-stream", b"")   # nothing playing / no art
+                return
+
             if route in {"/devices", "/devices/"}:
                 status_code, payload = handle_get_devices()
             elif route in {"/registered-devices", "/registered-devices/", "/regsistered-devices", "/regsistered-devices/"}:
@@ -72,6 +92,8 @@ class WifiApiHandler(BaseHTTPRequestHandler):
                 status_code, payload = handle_get_logs()
             elif route in {"/weather", "/weather/"}:
                 status_code, payload = handle_get_weather()
+            elif route in {"/spotify/state", "/spotify/state/"}:
+                status_code, payload = handle_get_spotify_state()
             elif route in {"/display/state", "/display/state/"}:
                 status_code, payload = handle_get_display_state()
             elif route in {"/presence/history", "/presence/history/"}:

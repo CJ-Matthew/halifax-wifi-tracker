@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 # Faces the firmware knows how to render. Slugs must match the firmware's
 # `faces[]` ids and the simulator's registered faces.
-VALID_FACES = ("clock", "fire", "starfield")
+VALID_FACES = ("clock", "fire", "starfield", "spotify")
 DEFAULT_FACE = "clock"
 
 # (hour, minute) -> face, evaluated in Australia/Sydney local time.

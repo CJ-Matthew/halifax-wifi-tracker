@@ -1,1 +1,3 @@
-# No third-party dependencies — stdlib only
+# Pillow — resizes Spotify album art to 30×30 for the LED matrix (backend/spotify.py).
+# Everything else is stdlib only.
+Pillow>=10.0.0
