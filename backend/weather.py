@@ -11,7 +11,7 @@ import urllib.request
 from datetime import datetime, timedelta
 
 _CACHE = {"ts": 0.0, "data": None}
-_TTL_SECONDS = 600  # 10 minutes
+_TTL_SECONDS = 180  # 3 minutes
 
 
 def _condition_from_code(code):
