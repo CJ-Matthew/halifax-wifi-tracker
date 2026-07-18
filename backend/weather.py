@@ -51,14 +51,17 @@ def _precip_now(current, hourly):
         except (TypeError, ValueError):
             now = None
         if now is not None:
+            # Preceding-hour sum: the bucket covering "now" is the *next* hour
+            # boundary (at 03:15 that's the 04:00 reading, spanning 03:00-04:00).
+            # The current hour-floor bucket is already fully in the past, so it
+            # must NOT count as rain now — doing so left rain on the display for
+            # up to an hour after it had stopped.
             floor = now.replace(minute=0, second=0, microsecond=0)
-            covering = {
-                floor.isoformat(timespec="minutes"),            # the past hour
-                (floor + timedelta(hours=1)).isoformat(timespec="minutes"),  # the hour covering now
-            }
+            covering = (floor + timedelta(hours=1)).isoformat(timespec="minutes")
             for t, amt in zip(times, amounts):
-                if t in covering:
+                if t == covering:
                     precip = max(precip, _as_float(amt))
+                    break
 
     return precip
 
